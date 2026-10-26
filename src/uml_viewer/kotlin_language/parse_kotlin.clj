@@ -4,9 +4,6 @@
   (:require [clojure.string :as str]
             [uml-viewer.graph :as graph]))
 
-;; Masking: comments and string bodies become spaces, so braces, colons and
-;; keywords inside them are not read. Newlines stay, so offsets and lines hold.
-
 (declare string-end)
 
 (defn- blank [^StringBuilder sb ^String source i end]
@@ -100,8 +97,6 @@
       (if (>= i n)
         (str sb)
         (recur (mask-step source sb i n))))))
-
-;; Structure
 
 (defn- brace-pairs
   "Every `[open close]` brace pair. An unclosed brace closes at the end."

@@ -39,8 +39,6 @@
          (remove #(test-source-set? (relative-segs root %)))
          (sort-by #(.getPath %)))))
 
-;; Graph
-
 (defn- qualify [package path]
   (if (str/blank? package) path (str package "." path)))
 

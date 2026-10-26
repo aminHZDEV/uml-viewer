@@ -5,20 +5,20 @@
             [uml-viewer.source :as source]))
 
 (def ^:private shapes
-  (str "package demo\n"                       ;; 1
-       "\n"                                   ;; 2
-       "class Square(val s: Double) {\n"      ;; 3
-       "    fun area() = s * s\n"             ;; 4
-       "    companion object {\n"             ;; 5
-       "        fun area() = 1.0\n"           ;; 6
-       "    }\n"                              ;; 7
-       "}\n"                                  ;; 8
-       "\n"                                   ;; 9
-       "class Circle(val r: Double) {\n"      ;; 10
-       "    override fun area() = r * r\n"    ;; 11
-       "}\n"                                  ;; 12
-       "\n"                                   ;; 13
-       "fun area(x: Double) = x\n"))          ;; 14
+  (str "package demo\n"
+       "\n"
+       "class Square(val s: Double) {\n"
+       "    fun area() = s * s\n"
+       "    companion object {\n"
+       "        fun area() = 1.0\n"
+       "    }\n"
+       "}\n"
+       "\n"
+       "class Circle(val r: Double) {\n"
+       "    override fun area() = r * r\n"
+       "}\n"
+       "\n"
+       "fun area(x: Double) = x\n"))
 
 (defn- shapes-file []
   (let [file (io/file (System/getProperty "java.io.tmpdir")
