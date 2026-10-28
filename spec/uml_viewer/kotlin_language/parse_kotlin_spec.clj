@@ -64,3 +64,33 @@
     (should= "GeometryKt" (parse/facade-name "Geometry.kt" ""))
     (should= "Geo_utilsKt" (parse/facade-name "geo-utils.kt" ""))
     (should= "Geo" (parse/facade-name "Geometry.kt" "@file:JvmName(\"Geo\")\npackage demo\n"))))
+
+(defn- top-level [source]
+  (let [surface (parse/read-source "Text.kt" (str "package demo\n" source "\n"))]
+    {:funs (mapv (juxt :name :owner) (:funs surface))
+     :facade (:facade surface)}))
+
+(describe "kotlin extension receivers"
+  (it "reads a plain receiver"
+    (should= {:funs [["plain" nil]] :facade "TextKt"}
+             (top-level "fun String.plain() = 1")))
+
+  (it "reads a definitely non-null receiver"
+    (should= {:funs [["open" nil]] :facade "TextKt"}
+             (top-level "fun <T> Box<T & Any>.open() = 1")))
+
+  (it "reads a function-type receiver"
+    (should= {:funs [["twice" nil]] :facade "TextKt"}
+             (top-level "fun (() -> Unit).twice() = 1")))
+
+  (it "reads a suspend function-type receiver"
+    (should= {:funs [["later" nil]] :facade "TextKt"}
+             (top-level "fun (suspend () -> Unit).later() = 1")))
+
+  (it "reads a function-type receiver with parameters inside"
+    (should= {:funs [["curried" nil]] :facade "TextKt"}
+             (top-level "fun <P1, R> ((P1) -> R).curried() = 1")))
+
+  (it "reads a nullable function-type receiver inside a class"
+    (should= {:funs [["call" "Box"]] :facade nil}
+             (top-level "class Box {\n    fun ((Int) -> Unit)?.call() = 1\n}"))))

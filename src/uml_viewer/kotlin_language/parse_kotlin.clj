@@ -287,7 +287,10 @@
     (place-types (map #(with-body pairs %) candidates) pairs)))
 
 (def ^:private fun-pattern
-  #"(?<![\w$`])fun\s+(?:<[^(){}=]*?>\s*)?(?:[\w.?<>,* ]+?\.)?(`[^`\n]+`|[A-Za-z_]\w*)\s*\(")
+  (re-pattern
+    (str "(?<![\\w$`])fun\\s+(?:<[^(){}=]*?>\\s*)?"
+         "(?:(?:\\((?:[^()\\n{}=]|\\([^()\\n{}=]*\\))*\\)\\??|[\\w.?<>,*& ]+?)\\.)?"
+         "(`[^`\\n]+`|[A-Za-z_]\\w*)\\s*\\(")))
 
 (defn- statement-prefix
   "Text between the last statement boundary and `start`."
