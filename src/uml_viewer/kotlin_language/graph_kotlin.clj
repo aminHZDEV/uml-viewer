@@ -13,14 +13,20 @@
   (or (str/starts-with? name ".")
       (contains? skip-dir-names name)))
 
-(defn- test-file? [name]
-  (boolean (re-find #"(?:Test|Tests|Spec)\.kt$" name)))
+(def ^:private test-dir-names
+  #{"test" "tests" "spec" "specs" "__tests__"})
 
-(defn- test-source-set?
-  "Gradle keeps tests in `src/test`, `src/androidTest`, `src/jvmTest` and the like."
+(defn- test-dir?
+  "crapper's rule: `test`, `tests`, `spec`, `specs`, `__tests__`, or a source
+  set such as `jvmTest`, `commonTest` or `testFixtures`."
+  [name]
+  (or (contains? test-dir-names name)
+      (boolean (re-matches #"[a-z][A-Za-z0-9]*Tests?|test[A-Z][A-Za-z0-9]*" name))))
+
+(defn- test-path?
+  "Any directory segment of the path, never the file name, is a test directory."
   [segs]
-  (boolean (some (fn [[a b]] (and (= a "src") (str/includes? (str/lower-case b) "test")))
-                 (partition 2 1 segs))))
+  (boolean (some test-dir? (butlast segs))))
 
 (defn- relative-segs [root file]
   (str/split (str/replace (str (.relativize (.toPath root) (.toPath file))) #"\\" "/")
@@ -35,8 +41,7 @@
                    root)
          (filter #(.isFile %))
          (filter #(str/ends-with? (.getName %) ".kt"))
-         (remove #(test-file? (.getName %)))
-         (remove #(test-source-set? (relative-segs root %)))
+         (remove #(test-path? (relative-segs root %)))
          (sort-by #(.getPath %)))))
 
 (defn- qualify [package path]

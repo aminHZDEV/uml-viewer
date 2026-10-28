@@ -529,9 +529,13 @@ per type, plus one class per file that has top-level functions. Each
 The `package` line, not the directory, names the tree, so a nested type
 sits inside its outer type's box. `@file:JvmName("Geo")` renames the
 file class. A type declared inside a function or lambda is not drawn.
-It reads `.kt` files and skips `*Test.kt`, `*Tests.kt`, `*Spec.kt`,
-Gradle test source sets (`src/test`, `src/androidTest`, any `src/*test*`),
-and paths under `build`, `out`, `target`, and dot directories.
+It reads `.kt` files and skips test code by crapper's rule: a file
+under a directory named `test`, `tests`, `spec`, `specs` or `__tests__`,
+or under a source set such as `jvmTest`, `commonTest` or `testFixtures`
+(`[a-z][A-Za-z0-9]*Tests?` or `test[A-Z][A-Za-z0-9]*`). Only directory
+names count, so `TestBuilders.kt` and `AbstractFileSystemTest.kt` in a
+main source set are drawn. It also skips paths under `build`, `out`,
+`target`, and dot directories.
 `class A : B()` (a superclass call) is `:inheritance`; `class A : I` and
 `I by d` are `:implements`. An `import` of a project type, of a member
 of one (`demo.Color.RED`), or of a top-level function is a

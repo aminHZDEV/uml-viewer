@@ -83,7 +83,7 @@
   (it "draws one class per type and per file with top-level functions"
     (let [scan (graph/scan kt/impl (str (io/file (demo-project) "src/main/kotlin")) {:prefix "demo"})
           classes (by-id scan)]
-      (should= #{:Shape :Shape.Companion :Shape.Inner :Circle :Named :Color :GeometryKt
+      (should= #{:Shape :Shape.Companion :Shape.Inner :Circle :CircleSpec :Named :Color :GeometryKt
                  :report.Report :kotlin.math.PI :java.util.UUID :java.time.Clock :kotlinx.coroutines}
                (set (keys classes)))
       (should= "demo.Shape" (:ns (classes :Shape)))
@@ -103,11 +103,26 @@
       (should= :enumeration (:stereotype (classes :Color)))
       (should-be-nil (:stereotype (classes :Circle)))))
 
-  (it "skips Gradle test source sets, test files and build output"
+  (it "skips test directories and build output, and keeps a file named like a test"
     (let [ids (set (keys (by-id (graph/scan kt/impl (str (demo-project)) {:prefix "demo"}))))]
       (should-not (ids :ShapeTest))
-      (should-not (ids :CircleSpec))
+      (should (ids :CircleSpec))
       (should-not (ids :Gen))))
+
+  (it "skips exactly the test directories crapper skips"
+    (let [dir (temp-root)
+          put (fn [rel cls] (spit-file dir rel (str "package demo\nclass " cls "\n")))]
+      (put "src/jvmTest/kotlin/demo/A.kt" "JvmTestA")
+      (put "core/commonTest/src/demo/B.kt" "CommonTestB")
+      (put "src/testFixtures/kotlin/demo/C.kt" "FixtureC")
+      (put "lib/specs/demo/D.kt" "SpecsD")
+      (put "kotlinx-coroutines-test/common/src/TestBuilders.kt" "TestBuilders")
+      (put "src/latestApi/A.kt" "LatestApi")
+      (put "src/main/kotlin/demo/testing/E.kt" "Testing")
+      (put "okio-testing-support/src/commonMain/kotlin/okio/AbstractFileSystemTest.kt"
+           "AbstractFileSystemTest")
+      (let [ids (set (keys (by-id (graph/scan kt/impl (str dir) {:prefix "demo"}))))]
+        (should= #{:TestBuilders :LatestApi :Testing :AbstractFileSystemTest} ids))))
 
   (it "lists public functions declared directly in each class as ops"
     (let [classes (by-id (graph/scan kt/impl (str (demo-project)) {:prefix "demo"}))
