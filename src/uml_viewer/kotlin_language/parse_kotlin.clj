@@ -150,7 +150,7 @@
     (str "(?<![\\w.:$`])"
          "((?:(?:public|private|internal|protected|open|final|abstract|sealed|data|"
          "inner|value|annotation|enum|expect|actual|external|companion|fun)\\s+)*)"
-         "(class|interface|object)\\b(?:\\s+([A-Za-z_]\\w*))?")))
+         "(class|interface|object)\\b(?:\\s+(`[^`\\n]+`|[A-Za-z_]\\w*))?")))
 
 (defn- type-kind [modifiers keyword]
   (let [mods (set (str/split (str/trim modifiers) #"\s+"))]
@@ -251,7 +251,8 @@
 (defn- type-candidate [text {:keys [start end groups]}]
   (let [[modifiers keyword name] groups
         kind (type-kind modifiers keyword)
-        name (or name (when (= kind :companion) "Companion"))]
+        name (or (some-> name (str/replace "`" ""))
+                 (when (= kind :companion) "Companion"))]
     (when name
       (let [{hend :end open :open} (header-end text start end)]
         {:name name

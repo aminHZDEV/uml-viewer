@@ -94,3 +94,23 @@
   (it "reads a nullable function-type receiver inside a class"
     (should= {:funs [["call" "Box"]] :facade nil}
              (top-level "class Box {\n    fun ((Int) -> Unit)?.call() = 1\n}"))))
+
+(describe "kotlin backticked type names"
+  (it "reads a backticked object, a backticked nested class and a companion inside one"
+    (let [surface (parse/read-source "-Deprecated.kt"
+                                     (str "package okio\n"
+                                          "object `-Deprecated` {\n"
+                                          "    fun buffer() = 1\n"
+                                          "}\n"
+                                          "class Plain {\n"
+                                          "    class `with space` { fun inside() = 2 }\n"
+                                          "}\n"
+                                          "internal class `Outer$WithDate$DefaultImpls` {\n"
+                                          "    companion object { fun date() = 3 }\n"
+                                          "}\n"))]
+      (should= ["-Deprecated" "Plain" "Plain.with space" "Outer$WithDate$DefaultImpls"
+                "Outer$WithDate$DefaultImpls.Companion"]
+               (map :path (:types surface)))
+      (should= [["buffer" "-Deprecated"] ["inside" "Plain.with space"]
+                ["date" "Outer$WithDate$DefaultImpls.Companion"]]
+               (map (juxt :name :owner) (:funs surface))))))

@@ -74,8 +74,8 @@
 
 (defn- with-ids [classes prefix file]
   (mapv (fn [c]
-          (let [id (graph/id-of (:ns c) prefix)]
-            (assoc c :id id :name (graph/module-name id) :lang :kotlin
+          (let [id (graph/id-of (str/replace (:ns c) #"\s" "_") prefix)]
+            (assoc c :id id :name (last (str/split (:path c) #"\.")) :lang :kotlin
                      :file (graph/relative-path file))))
         classes))
 

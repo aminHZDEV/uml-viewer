@@ -1,5 +1,6 @@
 (ns uml-viewer.kotlin-language.graph-kotlin-spec
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [speclj.core :refer :all]
             [uml-viewer.application.ir-generator :as ir-generator]
             [uml-viewer.graph :as graph]
@@ -137,6 +138,26 @@
       (should (edges [:report.Report :java.time.Clock :dependency]))
       (should (edges [:report.Report :kotlinx.coroutines :dependency]))
       (should-not (some (fn [[_ to]] (= :demo to)) edges))))
+
+  (it "names a backticked type as crapper does and keeps its id readable"
+    (let [dir (temp-root)]
+      (spit-file dir "okio/-Deprecated.kt"
+                 (str "package okio\n"
+                      "object `-Deprecated` { fun buffer() = 1 }\n"
+                      "class Plain {\n"
+                      "    class `with space` { fun inside() = 2 }\n"
+                      "}\n"
+                      "internal class `Outer$WithDate$DefaultImpls` {\n"
+                      "    companion object { fun date() = 3 }\n"
+                      "}\n"))
+      (let [scan (graph/scan kt/impl (str dir) {:prefix "okio"})
+            rows (set (map (juxt :id :ns :name #(mapv :name (:ops %))) (:classes scan)))]
+        (should (rows [:-Deprecated "okio.-Deprecated" "-Deprecated" ["buffer"]]))
+        (should (rows [:Plain.with_space "okio.Plain.with space" "with space" ["inside"]]))
+        (should (rows [(keyword "Outer$WithDate$DefaultImpls.Companion")
+                       "okio.Outer$WithDate$DefaultImpls.Companion" "Companion" ["date"]]))
+        (should= (:classes scan)
+                 (:classes (edn/read-string (ir-generator/emit scan)))))))
 
   (it "drops local classes and functions"
     (let [scan (graph/scan kt/impl (str (demo-project)) {:prefix "demo"})]
